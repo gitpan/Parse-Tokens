@@ -9,7 +9,7 @@
 BEGIN
 {
 	$| = 1;
-	print "1..1\n";
+	print "1..13\n";
 }
 
 END
@@ -17,15 +17,76 @@ END
 	print "not ok 1\n" unless $loaded;
 }
 
-{
-	use Parse::Tokens;
-	$loaded = 1;
-	print "ok 1\n";
-}
+use Parse::Tokens;
+
+$got_pre = 0;
+$got_post = 0;
+$got_token = 0;
+$got_ether = 0;
+
+@labels = (
+	"loading module",
+	"initializing module",
+	"setting delimiters",
+	"setting event callback for 'pre_parse'",
+	"setting event callback for 'token'",
+	"setting event callback for 'ether'",
+	"setting event callback for 'post_parse'",
+	"setting text",
+	"parsing text",
+	"received pre event",
+	"received token event",
+	"received ether event",
+	"received post event",
+);
+
+$loaded = 1;
+$testno = 1;
+&report( $loaded );
 
 ######################### End of black magic.
 
 # Insert your test code below (better if it prints "ok 13"
 # (correspondingly "not ok 13") depending on the success of chunk 13
 # of the test code):
+
+my $parser = new Parse::Tokens ({});
+&report( $parser );
+&report( $parser->delimiters( [['<?','?>']] ) );
+&report( $parser->pre_callback( \&pre ) );
+&report( $parser->token_callback( \&token ) );
+&report( $parser->ether_callback( \&ether ) );
+&report( $parser->post_callback( \&post ) );
+&report( $parser->text(q{ Mi llamo <? __PACKAGE__ ?>.  }) );
+&report( $parser->parse() );
+&report( $got_pre );
+&report( $got_token );
+&report( $got_ether );
+&report( $got_post );
+
+sub token
+{
+	my( $token ) = @_;
+	$got_token++ if ref($token) eq 'ARRAY';
+}
+
+sub ether
+{
+	my( $text ) = @_;
+	$got_ether++ if $text;
+}
+
+sub pre { $got_pre++; }
+sub post { $got_post++; }
+
+sub report
+{
+	my( $result ) = @_;
+	my $status = $result ? 'ok' : 'not ok';
+	#print "(", $testno, ") ", $labels[($testno-1)], "...$status\n";
+	#printf( "%02d. %-40s%5s\n", $testno, $labels[($testno-1)], $status );
+	printf( "%02d. %s...%s\n", $testno, $labels[($testno-1)], $status );
+	$testno++;
+	return 1;
+}
 

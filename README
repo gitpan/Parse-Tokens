@@ -1,6 +1,6 @@
 This is the Parse::Tokens module.
 
-Parse::Tokens provides a simple base class for parsing text with embedded tokens.
+Parse::Tokens is a package for parsing text with embedded tokens.
 
 To install the module:
 
@@ -9,35 +9,13 @@ To install the module:
    make test
    make install
 
-Once installed, see sample.pl for a simple sample script example. Issue the command:
-	perl sample.pl sample.dat
+Once installed, see the demos/ directory for demonstration scripts.
 
-See the CPAN module Text::Oyster for an example of use by another module.
+See the CPAN module 'Text::Oyster' for an full featured example.
 
-History:
-
-	0.24
-	- added sample script and data.
-
-	0.23
-	- fix pseudo-bug relating to 'o' option and regular expressions and token
-	  matching.
-
-	0.22
-	- add push_delimiters method for adding to the delimiter array.
-
-	0.21
-	- add pre_parse and post_parse methods; add minimal debug message support.
-
-	0.20
-	- added multi-token support
-
-	0.17
-	- delimiters() now returns an array of references to the real and the escaped
-	delimiters. This differs from previous behavior where an array reference
-	was returned.
+See 'Changes' for history
 
 --
 Steve McKay
-steve@colgreen.com
+sm@z33.org
 
