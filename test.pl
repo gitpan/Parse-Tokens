@@ -25,19 +25,19 @@ $got_token = 0;
 $got_ether = 0;
 
 @labels = (
-	"loading module",
-	"initializing module",
-	"setting delimiters",
-	"setting event callback for 'pre_parse'",
-	"setting event callback for 'token'",
-	"setting event callback for 'ether'",
-	"setting event callback for 'post_parse'",
-	"setting text",
-	"parsing text",
-	"received pre event",
-	"received token event",
-	"received ether event",
-	"received post event",
+	"Loading module",
+	"Initializing module",
+	"Setting delimiters",
+	"Setting event callback for 'pre_parse'",
+	"Setting event callback for 'token'",
+	"Setting event callback for 'ether'",
+	"Setting event callback for 'post_parse'",
+	"Setting text",
+	"Parsing text",
+	"Received pre event",
+	"Received token event",
+	"Received ether event",
+	"Received post event",
 );
 
 $loaded = 1;

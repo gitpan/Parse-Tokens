@@ -8,7 +8,7 @@ package Parse::Tokens;
 use strict;
 use vars qw( $VERSION  );
 
-$VERSION = 0.25;
+$VERSION = 0.26;
 
 sub new
 {
@@ -368,85 +368,155 @@ Parse::Tokens - class for parsing text with embedded tokens
       # do something with the text...
   }
 
+
 =head1 DESCRIPTION
 C<Parse::Tokens> provides a base class for parsing delimited strings from text blocks. Use C<Parse::Tokens> as a base class for your own module or script. Very similar in style to C<HTML::Parser>.
 
-=head1 SETTER/GETTER FUNCTIONS
+
+
+=head1 METHODS
 
 =over 10
 
-=item autoflush()
-Turn on autoflushing causing the template cash (not the text) to be purged before each call to parse();.
+=item new()
 
-=item delimiters()
-Specify delimiters as an array reference pointing to the left and right delimiters. Returns array reference containing two array references of delimiters and escaped delimiters.
+  Pass parameter as a hash reference.
+  Options are specified in the getter/setter methods.
 
-=item debug()
-Turn on debug mode. 1 is on, 0 is off.
-
-=item ether_callback()
-Sets/gets the callback code reference for the 'ether' event.
 
 =item flush()
-Flush the template cash.
 
-=item loose_paring()
-Allow any combination of delimiters to match. Default is turned of requiring exactly specified pair matches only.
+  Flush the template cash.
+
 
 =item parse()
-Run the parser.
 
-=item post_callback()
-Sets/gets the callback code reference for the 'post_parse' event.
+  Run the parser.
 
-=item pre_callback()
-Sets/gets the callback code reference for the 'pre_parse' event.
-
-=item push_delimiters()
-Add a delimiter pair (array ref) to the list of delimiters.
- 
-=item new()
-Pass parameter as a hash reference. Options are: TEXT - a block of text; DELIMITERS - a array reference consisting of the left and right token delimiters (eg ['<?', '?>']); AUTOFLUSH - 0 or 1 (default). While these are all optional at initialization, both TEXT and DELIMITERS must be set prior to calling parse() or as parameters to parse().
-
-=item text()
-Load text.
-
-=item token_callback()
-Sets/gets the callback code reference for the 'token' event.
 
 =back
+
+
+
+=head1 SETTER/GETTER METHODS
+
+=over 10
+
+
+=item autoflush()
+
+  Turn on autoflushing causing the template cash (not the text) to be purged before each call to parse();.
+
+
+=item delimiters()
+
+  Specify delimiters as an array reference pointing to the left and right delimiters. Returns array reference containing two array references of delimiters and escaped delimiters.
+
+
+=item debug()
+
+  Turn on debug mode. 1 is on, 0 is off.
+
+
+=item ether_callback()
+
+  Sets/gets the callback code reference for the 'ether' event.
+
+
+=item loose_paring()
+
+  Allow any combination of delimiters to match. Default is turned of requiring exactly specified pair matches only.
+
+
+=item post_callback()
+
+  Sets/gets the callback code reference for the 'post_parse' event.
+
+
+=item pre_callback()
+
+  Sets/gets the callback code reference for the 'pre_parse' event.
+
+
+=item push_delimiters()
+
+  Add a delimiter pair (array ref) to the list of delimiters.
+ 
+
+=item text()
+
+  Load text.
+
+
+=item token_callback()
+
+  Sets/gets the callback code reference for the 'token' event.
+
+=back
+
+
 
 =head1 EVENT METHODS
 
 =over 10
 
+
 =item ether()
-Event method that gets called when non-token text is encountered during parsing.
+
+  Event method that gets called when non-token text is encountered during parsing.
+
 
 =item post_parse()
-Event method that gets called after parsing has completed.
+
+  Event method that gets called after parsing has completed.
+
 
 =item pre_parse()
-Event method that gets called prior to parsing commencing.
+
+  Event method that gets called prior to parsing commencing.
+
 
 =item token()
-Event method that gets called when a token is encountered during parsing.
+
+  Event method that gets called when a token is encountered during parsing.
 
 =back
 
-=head1 CHANGES
 
-0.25 - added support for callbacks.
-     - improved debug messaging.
-     - fixed bug in delimiter assignment.
-     - rearranged distribution files.
-0.24 - added sample script and sample data.
-0.23 - fixed pseudo bug relation to regular expression 'o' option.
-     - aliased 'add_delimiters' to 'push_delimiters'.
-	 - misc internal changes.
-0.22 - add push_delimiters method for adding to the delimiter array.
-0.21 - add pre_parse and post_parse methods; add minimal debug message support.
-0.20 - add multi-token support.
+=head1 HISTORY
+
+=item 0.26
+
+  Cleanup of internal documentation.
+
+=item 0.25
+
+  Added support for callbacks.
+  Improved debug messaging.
+  Fixed bug in delimiter assignment.
+  Rearranged distribution files.
+
+=item 0.24
+
+  Added sample script and sample data.
+
+=item 0.23
+
+  Fixed pseudo bug relation to regular expression 'o' option.
+  Aliased 'add_delimiters' to 'push_delimiters'.
+  Misc internal changes.
+
+=item 0.22
+
+  Add push_delimiters method for adding to the delimiter array.
+
+=item 0.21
+
+  Add pre_parse and post_parse methods; add minimal debug message support.
+
+=item 0.20
+
+  Add multi-token support.
 
 =head1 AUTHOR
 
@@ -462,3 +532,4 @@ modify it under the same terms as Perl itself.
 perl(1).
 
 =cut
+
