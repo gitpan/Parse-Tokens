@@ -3,7 +3,7 @@ package Parse::Tokens;
 use strict;
 use vars	qw( @ISA $VERSION );
 
-$VERSION = 0.20;
+$VERSION = 0.22;
 
 sub new
 {
@@ -78,33 +78,41 @@ sub delimiters
 		{
 			for( @$args )
 			{
-				$self->_add_delims( $_ );
+				$self->push_delimiters( $_ );
 			}	
 		}
 		# we have only this array
 		else
 		{
-			$self->_add_delims( $args );
+			$self->push_delimiters( $args );
 		}
 	}
 	return @{$self->{delimiters}};
 }
 
-sub _add_delims
+sub push_delimiters
 { 
 	# add a delim pair (real and quoted) to the delimiters array
 	my( $self, $args ) = @_;
-	push(
-		@{$self->{delimiters}}, {
-			real	=> $args,
-			quoted	=> [
-				quotemeta($args->[0]),
-				quotemeta($args->[1])
-			]
-		}
-	);
-	$self->{delim_index}->{$args->[0]} = $#{$self->{delimiters}};
-	$self->{delim_index}->{$args->[1]} = $#{$self->{delimiters}};
+	if( ref($args) eq 'ARRAY' )
+	{
+		push(
+			@{$self->{delimiters}}, {
+				real	=> $args,
+				quoted	=> [
+					quotemeta($args->[0]),
+					quotemeta($args->[1])
+				]
+			}
+		);
+		$self->{delim_index}->{$args->[0]} = $#{$self->{delimiters}};
+		$self->{delim_index}->{$args->[1]} = $#{$self->{delimiters}};
+	}
+	else
+	{
+		warn "Args to push_delimiter not an array reference" if $self->{debug};
+	}
+	return 1;
 }
 
 sub flush
@@ -117,6 +125,7 @@ sub flush
 sub parse
 {
 	my( $self, $args ) = @_;
+	$self->pre_parse();
 	$self->init( $args );
 	return unless defined $self->{text};
 	$self->flush if $self->{autoflush};
@@ -150,6 +159,7 @@ sub parse
 		{ $self->ether($self->{cache}->[$n]); }
 		$n++
 	}
+	$self->post_parse();
 }
 
 
@@ -180,16 +190,32 @@ sub match_rex
 	return $rex;
 }
 
-
+# this is called just before parsing begins
+sub pre_parse
+{
+	my( $self ) = @_;
+	warn "You might want to overide the 'pre_parse' method of Parse::Tokens" if $self->{debug};
+}
 
 # an token consists of a left-delimiter, the contents, and a right-delimiter
-sub token{
-	die join( ', ', @_ );
+sub token
+{
+	my( $self, $token ) = @_;
+	warn "You might want to overide the 'token' method of Parse::Tokens", join( ', ', @$token ) if $self->{debug};
 }
 
 # ether is anything not contained in an atom
-sub ether{
-	die join( ', ', @_ );
+sub ether
+{
+	my( $self, $text ) = @_;
+	warn "You might want to overide the 'ether' method of Parse::Tokens", join( ', ', $text ) if $self->{debug};
+}
+
+# this is called just after parsing after
+sub post_parse
+{
+	my( $self ) = @_;
+	warn "You might want to overide the 'post_parse' method of Parse::Tokens" if $self->{debug};
 }
 
 1;
@@ -233,20 +259,40 @@ C<Parse::Tokens> provides a base class for parsing delimited strings from text b
 
 =item autoflush()
 
-Turn on autoflushing causing the template cash (not the text) to be purged before each parse();.
+Turn on autoflushing causing the template cash (not the text) to be purged before each call to parse();.
 
 =item delimiters()
 
 Specify delimiters as an array reference pointing to the left and right delimiters. Returns array reference containing two array references of delimiters and escaped delimiters.
 
+=item ether()
+
+Event method that gets called when non-token text is encountered during parsing.
+
 =item flush()
 
 Flush the template cash.
+
+=item loose_paring()
+
+Allow any combination of delimiters to match. Default is turned of requiring exactly specified pair matches only.
 
 =item parse()
 
 Run the parser.
 
+=item pre_parse()
+
+Event method that gets called prior to parsing commencing.
+
+=item post_parse()
+
+Event method that gets called after parsing has completed.
+
+=item push_delimiters()
+
+Add a delimiter pair (array ref) to the list of delimiters.
+ 
 =item new()
 
 Pass parameter as a hash reference. Options are: TEXT - a block of text; DELIMITERS - a array reference consisting of the left and right token delimiters (eg ['<?', '?>']); AUTOFLUSH - 0 or 1 (default). While these are all optional at initialization, both TEXT and DELIMITERS must be set prior to calling parse() or as parameters to parse().
@@ -255,11 +301,17 @@ Pass parameter as a hash reference. Options are: TEXT - a block of text; DELIMIT
 
 Load text.
 
+=item token()
+
+Event method that gets called when a token is encountered during parsing.
+
 =back
 
 =head1 CHANGES
 
-0.20 - added multi-token support
+0.22 - add push_delimiters method for adding to the delimiter array.
+0.21 - add pre_parse and post_parse methods; add minimal debug message support.
+0.20 - add multi-token support.
 
 =head1 AUTHOR
 
