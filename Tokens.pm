@@ -1,24 +1,23 @@
 package Parse::Tokens;
 
 use strict;
-use vars	qw( @ISA $VERSION );
+use vars qw( $VERSION );
 
-$VERSION = 0.22;
+$VERSION = 0.24;
 
 sub new
 {
 	my ( $proto, $params ) = @_;
 	my $class = ref($proto) || $proto;
 	my $self = {
-		loose_paring	=> undef,
-		debug			=> undef,
-		autoflush		=> undef,
-		text			=> undef,
-		delimiters		=> [],
-		delim_index		=> {}
+		debug => undef,
+		autoflush => undef,
+		loose_paring => undef,
+		text => undef,
+		delimiters => [],
+		delim_index => {}
 	};
 	bless ($self, $class);
-	$self->{delimiters} = [];
 	$self->init( $params );
 	$self;
 }
@@ -76,6 +75,7 @@ sub delimiters
 		# we have multiple arrays
 		if( ref($args->[0]) eq 'ARRAY' )
 		{
+			$self->{delimters} = [];
 			for( @$args )
 			{
 				$self->push_delimiters( $_ );
@@ -90,6 +90,7 @@ sub delimiters
 	return @{$self->{delimiters}};
 }
 
+*add_delimiters = \&push_delimiters;
 sub push_delimiters
 { 
 	# add a delim pair (real and quoted) to the delimiters array
@@ -131,12 +132,12 @@ sub parse
 	$self->flush if $self->{autoflush};
 
 	my @delim = $self->delimiters();
-	my $match_rex = $self->match_rex( \@delim );
+	my $match_rex = $self->match_expression( \@delim );
 
 	unless( $self->{cache} )
 	{
 		# parse the text
-		my @chunk = split( m/$match_rex/so, $self->{text} );
+		my @chunk = split( m/$match_rex/s, $self->{text} );
 		$self->{cache} = \@chunk;
 	}
 
@@ -162,8 +163,7 @@ sub parse
 	$self->post_parse();
 }
 
-
-sub match_rex
+sub match_expression
 {
 	# construct our token finding regular expression
 	my( $self, $delim ) = @_;
@@ -187,6 +187,7 @@ sub match_rex
 		}
 		$rex = join( '|', @sets );
 	}
+	$self->{match_expression} = $rex;
 	return $rex;
 }
 
@@ -250,7 +251,6 @@ Parse::Tokens - class for parsing text with embedded tokens
   }
 
 =head1 DESCRIPTION
-
 C<Parse::Tokens> provides a base class for parsing delimited strings from text blocks. Use C<Parse::Tokens> as a base class for your own module or script. Very similar in style to C<HTML::Parser>.
 
 =head1 FUNCTIONS
@@ -258,57 +258,49 @@ C<Parse::Tokens> provides a base class for parsing delimited strings from text b
 =over 10
 
 =item autoflush()
-
 Turn on autoflushing causing the template cash (not the text) to be purged before each call to parse();.
 
 =item delimiters()
-
 Specify delimiters as an array reference pointing to the left and right delimiters. Returns array reference containing two array references of delimiters and escaped delimiters.
 
 =item ether()
-
 Event method that gets called when non-token text is encountered during parsing.
 
 =item flush()
-
 Flush the template cash.
 
 =item loose_paring()
-
 Allow any combination of delimiters to match. Default is turned of requiring exactly specified pair matches only.
 
 =item parse()
-
 Run the parser.
 
 =item pre_parse()
-
 Event method that gets called prior to parsing commencing.
 
 =item post_parse()
-
 Event method that gets called after parsing has completed.
 
 =item push_delimiters()
-
 Add a delimiter pair (array ref) to the list of delimiters.
  
 =item new()
-
 Pass parameter as a hash reference. Options are: TEXT - a block of text; DELIMITERS - a array reference consisting of the left and right token delimiters (eg ['<?', '?>']); AUTOFLUSH - 0 or 1 (default). While these are all optional at initialization, both TEXT and DELIMITERS must be set prior to calling parse() or as parameters to parse().
 
 =item text()
-
 Load text.
 
 =item token()
-
 Event method that gets called when a token is encountered during parsing.
 
 =back
 
 =head1 CHANGES
 
+0.24 - added sample script and sample data.
+0.23 - fixed pseudo bug relation to regular expression 'o' option.
+     - aliased 'add_delimiters' to 'push_delimiters'.
+	 - misc internal changes.
 0.22 - add push_delimiters method for adding to the delimiter array.
 0.21 - add pre_parse and post_parse methods; add minimal debug message support.
 0.20 - add multi-token support.

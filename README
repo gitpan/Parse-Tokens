@@ -9,7 +9,25 @@ To install the module:
    make test
    make install
 
-Changes in this version...
+Once installed, see sample.pl for a simple sample script example. Issue the command:
+	perl sample.pl sample.dat
+
+See the CPAN module Text::Oyster for an example of use by another module.
+
+History:
+
+	0.24
+	- added sample script and data.
+
+	0.23
+	- fix pseudo-bug relating to 'o' option and regular expressions and token
+	  matching.
+
+	0.22
+	- add push_delimiters method for adding to the delimiter array.
+
+	0.21
+	- add pre_parse and post_parse methods; add minimal debug message support.
 
 	0.20
 	- added multi-token support
