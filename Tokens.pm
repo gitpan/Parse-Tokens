@@ -1,14 +1,15 @@
 package Parse::Tokens;
 
+# $Id: Tokens.pm,v 1.5 2001/11/28 01:14:55 steve Exp $
+
 # Copyright 2000-2001 by Steve McKay. All rights reserved.
-#
 # This library is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 
 use strict;
 use vars qw( $VERSION  );
 
-$VERSION = 0.26;
+$VERSION = 0.27;
 
 sub new
 {
@@ -19,7 +20,7 @@ sub new
 		text => undef,
 		autoflush => undef,
 		loose_paring => undef,
-		pro_callback => undef,
+		pre_callback => undef,
 		post_callback => undef,
 		token_callback => undef,
 		ether_callback => undef,
@@ -104,7 +105,7 @@ sub text
 {
 	my( $self, @args ) = @_;
 	$self->_msg( "Storing 'text'." );
-	$self->flush;
+	$self->flush();
 	$self->{'text'} = $args[0] if defined $args[0];
 	return $self->{'text'};
 }
@@ -176,7 +177,7 @@ sub parse
 	$self->pre_parse();
 	$self->init( $args[0] );
 	return unless defined $self->{'text'};
-	$self->flush if $self->{'autoflush'};
+	$self->flush() if $self->{'autoflush'};
 
 	my @delim = $self->delimiters();
 	my $match_rex = $self->match_expression( \@delim );

@@ -1,4 +1,7 @@
-0.25
+0.27
+	Rename misnamed pacakge variable (harmless).
+
+0.26
 	Cleanup internal documentation.
 
 0.25
