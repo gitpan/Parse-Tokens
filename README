@@ -11,8 +11,13 @@ To install the module:
 
 Changes in this version...
 
-   delimiters() now returns an array of real, escaped delimiters. This
-   differs previous behavior where an array reference was returned.
+	0.20
+	- added multi-token support
+
+	0.17
+	- delimiters() now returns an array of references to the real and the escaped
+	delimiters. This differs from previous behavior where an array reference
+	was returned.
 
 --
 Steve McKay

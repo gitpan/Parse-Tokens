@@ -1,76 +1,110 @@
 package Parse::Tokens;
 
-# Copyright 2000-2001 by Steve McKay. All rights reserved.
-#
-# This library is free software; you can redistribute it and/or
-# modify it under the same terms as Perl itself.
-
 use strict;
 use vars	qw( @ISA $VERSION );
 
-$VERSION = 0.17;
+$VERSION = 0.20;
 
 sub new
 {
 	my ( $proto, $params ) = @_;
-	my $class = ref( $proto ) || $proto;
+	my $class = ref($proto) || $proto;
 	my $self = {
-		text => undef,
-		delimiters => undef,
-		autoflush => undef,
-		debug => undef,
+		loose_paring	=> undef,
+		debug			=> undef,
+		autoflush		=> undef,
+		text			=> undef,
+		delimiters		=> [],
+		delim_index		=> {}
 	};
-	bless( $self, $class );
+	bless ($self, $class);
+	$self->{delimiters} = [];
 	$self->init( $params );
-	return $self;
+	$self;
 }
 
 sub init
 {
-    my( $self, $params ) = @_;
+    my( $self, $args ) = @_;
 	no strict 'refs';
-	for ( keys %$params )
+	for ( keys %$args )
 	{
 		my $ref = lc $_;
-		$self->$ref($params->{$_});
+		$self->$ref($args->{$_});
 	}
 	use strict;
-	return 1;
 }
 
 sub debug
 {
-	my( $self, $val ) = @_;
-	$self->{debug} = $val if defined $val;
+	my( $self, $arg ) = @_;
+	$self->{debug} = $arg if defined $arg;
 	return $self->{debug};
+}
+
+sub loose_paring
+{
+	my( $self, $arg ) = @_;
+	$self->{loose_paring} = $arg if defined $arg;
+#	return 1;
+	return $self->{loose_paring};
 }
 
 # this is returning a hash ref ($self I believe);
 sub autoflush
 {
-	my( $self, $val ) = @_;
-	$self->{autoflush} = $val if defined $val;
+	my( $self, $arg ) = @_;
+	$self->{autoflush} = $arg if defined $arg;
 	return $self->{autoflush};
 }
 
 sub text
 {
-	my( $self, $val ) = @_;
-	$self->flush();
-	$self->{text} = $val if defined $val;
+	my( $self, $arg ) = @_;
+	$self->flush;
+	$self->{text} = $arg if defined $arg;
 	return $self->{text};
 }
 
 sub delimiters
 {
-	my( $self, $delim ) = @_;
-	if ( ref( $delim ) eq 'ARRAY' )
+	my( $self, $args ) = @_;
+	# we currently support both a ref to an array of delims
+	# as well as an ref to an array of array refs with delims
+	if ( ref($args) eq 'ARRAY' )
 	{
-		$self->{delimiters}{real} = $delim;
-		$self->{delimiters}{escaped}->[0] = quotemeta( $delim->[0] );
-		$self->{delimiters}{escaped}->[1] = quotemeta( $delim->[1] );
+		# we have multiple arrays
+		if( ref($args->[0]) eq 'ARRAY' )
+		{
+			for( @$args )
+			{
+				$self->_add_delims( $_ );
+			}	
+		}
+		# we have only this array
+		else
+		{
+			$self->_add_delims( $args );
+		}
 	}
-	return( $self->{delimiters}{real}, $self->{delimiters}{escaped} );
+	return @{$self->{delimiters}};
+}
+
+sub _add_delims
+{ 
+	# add a delim pair (real and quoted) to the delimiters array
+	my( $self, $args ) = @_;
+	push(
+		@{$self->{delimiters}}, {
+			real	=> $args,
+			quoted	=> [
+				quotemeta($args->[0]),
+				quotemeta($args->[1])
+			]
+		}
+	);
+	$self->{delim_index}->{$args->[0]} = $#{$self->{delimiters}};
+	$self->{delim_index}->{$args->[1]} = $#{$self->{delimiters}};
 }
 
 sub flush
@@ -82,25 +116,29 @@ sub flush
 
 sub parse
 {
-	my( $self, $params ) = @_;
-	$self->init( $params );
+	my( $self, $args ) = @_;
+	$self->init( $args );
 	return unless defined $self->{text};
 	$self->flush if $self->{autoflush};
+
+	my @delim = $self->delimiters();
+	my $match_rex = $self->match_rex( \@delim );
 
 	unless( $self->{cache} )
 	{
 		# parse the text
-		my $token = "($self->{delimiters}{escaped}->[0])(.*?)($self->{delimiters}{escaped}->[1])";
-		# study $self->{text};		#faster or not?
-		my @chunk = split( m/$token/s, $self->{text} );
+		my @chunk = split( m/$match_rex/so, $self->{text} );
 		$self->{cache} = \@chunk;
 	}
 
 	my $n = 0;
-	while( $n <= $#{$self->{cache}} )
+	while ($n <= $#{$self->{cache}})
 	{
 		# find opening delimiter
-		if ( $self->{cache}->[$n] eq $self->{delimiters}{real}->[0] )
+		
+		# if the first element of the token is the element of a token
+		#if ( $self->{cache}->[$n] eq $delim[0]->{real}->[0] || $self->{cache}->[$n] eq $delim[1]->{real}->[0] )
+		if ( $self->{cache}->[$n] eq $delim[$self->{delim_index}->{$self->{cache}->[$n]}]->{real}->[0] )
 		{ $self->token([
 			$self->{cache}->[$n],
 			$self->{cache}->[++$n],
@@ -109,17 +147,50 @@ sub parse
 
 		# or it's just text
 		else
-		{ $self->ether( $self->{cache}->[$n] ) }
+		{ $self->ether($self->{cache}->[$n]); }
 		$n++
 	}
-	return 1;
 }
 
+
+sub match_rex
+{
+	# construct our token finding regular expression
+	my( $self, $delim ) = @_;
+	my $rex;
+	if( $self->loose_paring() )
+	{
+		my( @left, @right );
+		for( @$delim )
+		{
+			push( @left, $_->{quoted}->[0] );
+			push( @right, $_->{quoted}->[1] );
+		}
+		$rex = '('.join('|', @left).')(.*?)('.join('|', @right).')';
+	}
+	else
+	{
+		my( @sets );
+		for( @$delim )
+		{
+			push( @sets, qq{($_->{quoted}->[0])(.*?)($_->{quoted}->[1])} );
+		}
+		$rex = join( '|', @sets );
+	}
+	return $rex;
+}
+
+
+
 # an token consists of a left-delimiter, the contents, and a right-delimiter
-sub token{}
+sub token{
+	die join( ', ', @_ );
+}
 
 # ether is anything not contained in an atom
-sub ether{}
+sub ether{
+	die join( ', ', @_ );
+}
 
 1;
 
@@ -156,39 +227,39 @@ Parse::Tokens - class for parsing text with embedded tokens
 
 C<Parse::Tokens> provides a base class for parsing delimited strings from text blocks. Use C<Parse::Tokens> as a base class for your own module or script. Very similar in style to C<HTML::Parser>.
 
-=head1 Functions
+=head1 FUNCTIONS
 
 =over 10
 
-=item new()
+=item autoflush()
 
-Initializes a Parse::Tokens object. Pass parameter as a hash reference. Options are: text - a block of text, delimiters - an array reference consisting of the left and right token delimiters (eg ['<?', '?>']), autoflush - 0(default) or 1, While these are all optional at initialization, both 'text' and 'delimiters' are required prior to or when calling the parse() method.
+Turn on autoflushing causing the template cash (not the text) to be purged before each parse();.
 
 =item delimiters()
 
-Specify delimiters as an array reference pointing to the left and right delimiters. Returns a two-part array containing two array references of the real (origional) and the escaped (internal) delimiters.
-
-=item text()
-
-Load the text to be parsed. Flushes any existing text.
-
-=item parse()
-
-Run the parser. Accepts an hash reference with initialization parameters.
+Specify delimiters as an array reference pointing to the left and right delimiters. Returns array reference containing two array references of delimiters and escaped delimiters.
 
 =item flush()
 
-Flush the template cash. This happens automatically when new text is provided to the module.
+Flush the template cash.
 
-=item autoflush()
+=item parse()
 
-Turn on autoflushing causes Parse::Tokens to reparse the template text on every call to parse().
+Run the parser.
+
+=item new()
+
+Pass parameter as a hash reference. Options are: TEXT - a block of text; DELIMITERS - a array reference consisting of the left and right token delimiters (eg ['<?', '?>']); AUTOFLUSH - 0 or 1 (default). While these are all optional at initialization, both TEXT and DELIMITERS must be set prior to calling parse() or as parameters to parse().
+
+=item text()
+
+Load text.
 
 =back
 
 =head1 CHANGES
 
-delimiters() now returns an array of real, escaped delimiters. This is different that previous behavior where an array reference was returned.
+0.20 - added multi-token support
 
 =head1 AUTHOR
 
@@ -196,7 +267,7 @@ Steve McKay, steve@colgreen.com
 
 =head1 COPYRIGHT
 
-Copyright 2000-2001 by Steve McKay. All rights reserved.
+Copyright 2000 by Steve McKay. All rights reserved.
 
 This library is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
@@ -204,4 +275,3 @@ modify it under the same terms as Perl itself.
 perl(1).
 
 =cut
-
