@@ -1,6 +1,6 @@
 This is the Parse::Tokens module.
 
-Parse::Tokens provides a simple base class for parsing tokens from text blocks.
+Parse::Tokens provides a simple base class for parsing text with embedded tokens.
 
 To install the module:
 
@@ -8,6 +8,11 @@ To install the module:
    make
    make test
    make install
+
+Changes in this version...
+
+   delimiters() now returns an array of real, escaped delimiters. This
+   differs previous behavior where an array reference was returned.
 
 --
 Steve McKay
